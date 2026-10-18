@@ -1,0 +1,32 @@
+# Build and IDE output
+**/bin/
+**/obj/
+.vs/
+.idea/
+.vscode/
+*.user
+*.suo
+*.sln.docstates
+TestResults/
+
+# Local configuration and credentials; appsettings.json contains safe defaults only.
+**/appsettings.*.json
+**/launchSettings.json
+.env
+.env.*
+**/secrets.json
+**/*.local.json
+*.pfx
+*.p12
+*.pem
+*.key
+
+# Generated evidence stores and logs; synthetic source data can be committed later.
+.local/
+**/logs/
+*.log
+
+# Frontend dependencies and generated output
+**/node_modules/
+**/dist/
+*.tsbuildinfo

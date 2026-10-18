@@ -1,0 +1,160 @@
+{
+  "schemaVersion": 1,
+  "name": "incidentiq-synthetic-v1",
+  "documents": [
+    {
+      "documentId": "checkout-timeouts-runbook",
+      "sourceFile": "data\\synthetic\\checkout-timeouts-runbook.md",
+      "documentType": "runbook",
+      "lineCount": 31,
+      "canonicalSha256": "1032a6dafa504880e6e74929bf7dbbe5f62fdeac1d160c1ecd06cb3719580776"
+    },
+    {
+      "documentId": "inc-syn-001-report",
+      "sourceFile": "data\\synthetic\\inc-syn-001-report.md",
+      "documentType": "incident-report",
+      "lineCount": 29,
+      "canonicalSha256": "d7ee1bf8907bdf82a681688b38598062f96ba13e43f7bb7ef2c4c42065247c95"
+    },
+    {
+      "documentId": "inc-syn-002-logs",
+      "sourceFile": "data\\synthetic\\inc-syn-002-checkout.jsonl",
+      "documentType": "application-log",
+      "lineCount": 25,
+      "canonicalSha256": "5a6cbe82cc5c07b84fa08008231b83e6092000001250dc34ecc327778f937342"
+    }
+  ],
+  "facts": {
+    "restored-pool": {
+      "pattern": "\\b100\\b",
+      "documentId": "inc-syn-002-logs",
+      "lines": [23]
+    },
+    "recovered-latency": {
+      "pattern": "\\b185\\b",
+      "documentId": "inc-syn-002-logs",
+      "lines": [25]
+    },
+    "no-waiters": {
+      "pattern": "(?:waiting\\w*(?:\\s+\\w+){0,3}.{0,30}(?:\\b0\\b|\\bzero\\b)|(?:\\bzero\\b|\\bno\\b).{0,30}waiting)",
+      "documentId": "inc-syn-002-logs",
+      "lines": [24]
+    }
+  },
+  "cases": [
+    {
+      "id": "retrieval-recovery",
+      "mode": "search",
+      "suite": "core",
+      "request": {
+        "question": "What recovery followed the rollback to version 1.7.2?",
+        "documentId": "inc-syn-002-logs",
+        "topK": 1
+      },
+      "requiredEvidence": [{ "documentId": "inc-syn-002-logs", "lines": [23, 24, 25] }],
+      "minimumEvidenceRecall": 1.0,
+      "requiredFacts": []
+    },
+    {
+      "id": "retrieval-configuration",
+      "mode": "search",
+      "suite": "core",
+      "request": {
+        "question": "Which deployment override set databasePoolMax to 5 in version 1.8.0?",
+        "documentId": "inc-syn-002-logs",
+        "topK": 1
+      },
+      "requiredEvidence": [{ "documentId": "inc-syn-002-logs", "lines": [7] }],
+      "minimumEvidenceRecall": 1.0,
+      "requiredFacts": []
+    },
+    {
+      "id": "answer-recovery",
+      "mode": "answer",
+      "suite": "core",
+      "request": {
+        "question": "After rollback to 1.7.2, what were the database pool maximum, waiting request count, and p95 latency?",
+        "documentId": "inc-syn-002-logs",
+        "topK": 3
+      },
+      "requiredEvidence": [{ "documentId": "inc-syn-002-logs", "lines": [23, 24, 25] }],
+      "minimumEvidenceRecall": 1.0,
+      "requiredFacts": ["restored-pool", "recovered-latency", "no-waiters"],
+      "expectedInsufficientEvidence": false
+    },
+    {
+      "id": "answer-unsupported-question",
+      "mode": "answer",
+      "suite": "core",
+      "request": {
+        "question": "What was the Mars rover battery temperature during INC-SYN-002?",
+        "documentId": "inc-syn-002-logs",
+        "topK": 3
+      },
+      "requiredEvidence": [],
+      "minimumEvidenceRecall": null,
+      "requiredFacts": [],
+      "expectedInsufficientEvidence": true,
+      "forbiddenAnswerPatterns": ["\\b-?\\d+(?:\\.\\d+)?\\s*(?:degrees?\\b|celsius\\b|fahrenheit\\b|kelvin\\b|[CFK]\\b)"]
+    },
+    {
+      "id": "report-current-incident",
+      "mode": "report",
+      "suite": "core",
+      "request": {
+        "question": "Investigate INC-SYN-002. Explain the probable cause, then report the restored pool maximum, waiting requests and p95 latency after rollback. Include uncertainty and suggested read-only checks.",
+        "documentId": "inc-syn-002-logs",
+        "topK": 3
+      },
+      "requiredEvidence": [{ "documentId": "inc-syn-002-logs", "lines": [1, 7, 15, 23, 24, 25] }],
+      "minimumEvidenceRecall": 1.0,
+      "requiredFacts": ["restored-pool", "recovered-latency", "no-waiters"],
+      "expectedInsufficientEvidence": false,
+      "expectedRootCause": "hypothesis"
+    },
+    {
+      "id": "report-runbook-only",
+      "mode": "report",
+      "suite": "core",
+      "request": {
+        "question": "Using only this runbook, establish the cause of INC-SYN-002. Do not invent observations that the runbook does not contain.",
+        "documentId": "checkout-timeouts-runbook",
+        "topK": 3
+      },
+      "requiredEvidence": [],
+      "minimumEvidenceRecall": null,
+      "requiredFacts": [],
+      "expectedInsufficientEvidence": true,
+      "expectedRootCause": "not_established",
+      "maximumObservations": 0
+    },
+    {
+      "id": "comparison-fixed-report",
+      "mode": "report",
+      "suite": "tools",
+      "comparisonGroup": "configuration-and-recovery",
+      "request": {
+        "question": "Investigate INC-SYN-002. Read recorded configuration changes, logs from 2026-10-17T10:01:00Z to 2026-10-17T10:03:00Z, and recovery logs from 2026-10-17T10:08:00Z to 2026-10-17T10:10:00Z. Explain probable cause, restored pool maximum, waiting requests, p95 latency, and uncertainty.",
+        "documentId": "inc-syn-002-logs",
+        "topK": 1
+      },
+      "requiredEvidence": [{ "documentId": "inc-syn-002-logs", "lines": [1, 7, 15, 23, 24, 25] }],
+      "minimumEvidenceRecall": 1.0,
+      "requiredFacts": ["restored-pool", "recovered-latency", "no-waiters"]
+    },
+    {
+      "id": "comparison-tool-report",
+      "mode": "run",
+      "suite": "tools",
+      "comparisonGroup": "configuration-and-recovery",
+      "request": {
+        "question": "Investigate INC-SYN-002. Read recorded configuration changes, logs from 2026-10-17T10:01:00Z to 2026-10-17T10:03:00Z, and recovery logs from 2026-10-17T10:08:00Z to 2026-10-17T10:10:00Z. Explain probable cause, restored pool maximum, waiting requests, p95 latency, and uncertainty.",
+        "documentId": "inc-syn-002-logs",
+        "topK": 1
+      },
+      "requiredEvidence": [{ "documentId": "inc-syn-002-logs", "lines": [1, 7, 15, 23, 24, 25] }],
+      "minimumEvidenceRecall": 1.0,
+      "requiredFacts": ["restored-pool", "recovered-latency", "no-waiters"]
+    }
+  ]
+}
