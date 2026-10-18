@@ -12,7 +12,7 @@ var configuredOrigins = builder.Configuration
     .Get<string[]>();
 
 var allowedOrigins = configuredOrigins
-    ?? new[] { "http://localhost:5173", "http://127.0.0.1:5173" };
+    ?? new[] { "http://localhost:5173", "http://127.0.0.1:5173", "https://wonderful-pond-0cf948c0f.1.azurestaticapps.net/" };
 if (allowedOrigins.Any(origin =>
     !Uri.TryCreate(origin, UriKind.Absolute, out var uri)
     || (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps)
